@@ -187,6 +187,34 @@ class FMTCImageProvider extends ImageProvider<FMTCImageProvider> {
         },
       );
 
+      // Perform a secondary check to ensure that the bytes recieved actually
+      // encode a valid image
+      late final bool isValidImageData;
+      try {
+        isValidImageData = (await (await instantiateImageCodec(
+              bytes,
+              targetWidth: 8,
+              targetHeight: 8,
+            ))
+                    .getNextFrame())
+                .image
+                .width >
+            0;
+      } catch (e) {
+        isValidImageData = false;
+      }
+      if (!isValidImageData) {
+        if (!needsCreating) {
+          return finish(
+            bytes: bytes,
+            cacheHit: false,
+            throwError: !needsCreating
+                ? 'Failed to load the tile from the network because it responded with an HTTP code of 200 OK but an invalid image data. Your server may be misconfigured.'
+                : null,
+          );
+        }
+      }
+
       // Cache the tile in a separate isolate
       unawaited(file.create().then((_) => file.writeAsBytes(bytes!)));
       if (needsCreating) {
