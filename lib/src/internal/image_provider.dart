@@ -204,7 +204,7 @@ class FMTCImageProvider extends ImageProvider<FMTCImageProvider> {
         isValidImageData = false;
       }
       if (!isValidImageData) {
-        if (!needsCreating) {
+        if (needsCreating) {
           return finish(
             bytes: bytes,
             cacheHit: false,
