@@ -204,11 +204,11 @@ class FMTCImageProvider extends ImageProvider<FMTCImageProvider> {
         isValidImageData = false;
       }
       if (!isValidImageData) {
-        if (needsCreating) {
+        if (!needsCreating) {
           return finish(
             bytes: bytes,
             cacheHit: false,
-            throwError: !needsCreating
+            throwError: needsCreating
                 ? 'Failed to load the tile from the network because it responded with an HTTP code of 200 OK but an invalid image data. Your server may be misconfigured.'
                 : null,
           );
