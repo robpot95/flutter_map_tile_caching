@@ -88,6 +88,6 @@ AppBar buildHeader({
               );
             }
           },
-        )
+        ),
       ],
     );

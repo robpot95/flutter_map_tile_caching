@@ -197,7 +197,7 @@ class _StoreEditorPopupState extends State<StoreEditorPopup> {
                                 AutovalidateMode.onUserInteraction,
                             keyboardType: TextInputType.number,
                             inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly
+                              FilteringTextInputFormatter.digitsOnly,
                             ],
                             initialValue: metadata.data!.isEmpty
                                 ? '14'

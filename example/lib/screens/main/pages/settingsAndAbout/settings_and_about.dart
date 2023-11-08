@@ -20,6 +20,23 @@ class _SettingsAndAboutPageState extends State<SettingsAndAboutPage> {
         'bypassDownloadThreadsLimitation',
   };
 
+  String get operatingSystemFormatted {
+    switch (Platform.operatingSystem) {
+      case 'android':
+        return 'Android';
+      case 'ios':
+        return 'iOS';
+      case 'linux':
+        return 'Linux';
+      case 'macos':
+        return 'MacOS';
+      case 'windows':
+        return 'Windows';
+      default:
+        return 'Unknown Operating System';
+    }
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
         body: SafeArea(
@@ -80,7 +97,7 @@ class _SettingsAndAboutPageState extends State<SettingsAndAboutPage> {
                           context: context,
                           applicationName: 'FMTC Demo',
                           applicationVersion:
-                              'for v6.0.0\n(on ${Platform().operatingSystemFormatted})',
+                              'for v6.0.0\n(on $operatingSystemFormatted)',
                           applicationIcon: Image.asset(
                             'assets/icons/ProjectIcon.png',
                             height: 48,
@@ -114,23 +131,4 @@ class _SettingsAndAboutPageState extends State<SettingsAndAboutPage> {
           ),
         ),
       );
-}
-
-extension on Platform {
-  String get operatingSystemFormatted {
-    switch (Platform.operatingSystem) {
-      case 'android':
-        return 'Android';
-      case 'ios':
-        return 'iOS';
-      case 'linux':
-        return 'Linux';
-      case 'macos':
-        return 'MacOS';
-      case 'windows':
-        return 'Windows';
-      default:
-        return 'Unknown Operating System';
-    }
-  }
 }

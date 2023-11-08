@@ -72,7 +72,7 @@ class CircleRegion implements BaseRegion {
             labelStyle: labelStyle,
             labelPlacement: labelPlacement,
             points: toList(),
-          )
+          ),
         ],
       );
 

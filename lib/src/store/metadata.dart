@@ -93,7 +93,7 @@ class StoreMetadata {
                     e is File && p.extension(e.absolute.path) == '.metadata'
                         ? {
                             p.basenameWithoutExtension(e.absolute.path):
-                                await e.readAsString()
+                                await e.readAsString(),
                           }
                         : null,
               )
@@ -110,7 +110,7 @@ class StoreMetadata {
             (e) => e is File
                 ? {
                     p.basenameWithoutExtension(e.absolute.path):
-                        e.readAsStringSync()
+                        e.readAsStringSync(),
                   }
                 : null,
           )

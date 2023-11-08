@@ -78,7 +78,7 @@ class RectangleRegion implements BaseRegion {
               ),
               bounds.northWest,
             ],
-          )
+          ),
         ],
       );
 

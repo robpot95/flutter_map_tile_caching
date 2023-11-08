@@ -223,7 +223,7 @@ class StoreStats {
     List<ChangeType> events = const [
       ChangeType.ADD,
       ChangeType.MODIFY,
-      ChangeType.REMOVE
+      ChangeType.REMOVE,
     ],
     List<StoreParts> storeParts = StoreParts.values,
   }) {
