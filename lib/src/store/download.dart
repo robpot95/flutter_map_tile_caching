@@ -164,7 +164,7 @@ class DownloadManagement {
       await notification
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>()!
-          .requestPermission();
+          .requestNotificationsPermission();
 
       final Stream<DownloadProgress> downloadStream = startForeground(
         region: region,
