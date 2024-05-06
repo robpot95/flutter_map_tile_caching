@@ -43,12 +43,15 @@ class _StoreEditorPopupState extends State<StoreEditorPopup> {
   }
 
   @override
-  Widget build(BuildContext context) => WillPopScope(
-        onWillPop: () async {
+  Widget build(BuildContext context) => PopScope(
+        onPopInvoked: (bool didPop) {
+          if (didPop) {
+            return;
+          }
+
           scaffoldMessenger.showSnackBar(
             const SnackBar(content: Text('Changes not saved')),
           );
-          return true;
         },
         child: Scaffold(
           appBar: buildHeader(

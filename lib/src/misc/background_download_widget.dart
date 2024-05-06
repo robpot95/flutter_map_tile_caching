@@ -29,17 +29,21 @@ class FMTCBackgroundDownload extends StatefulWidget {
 }
 
 class _FMTCBackgroundDownloadState extends State<FMTCBackgroundDownload> {
-  Future<bool> _onWillPop() async {
-    if (!Navigator.canPop(context) &&
-        FlutterBackground.isBackgroundExecutionEnabled) {
-      await MoveToBackground.moveTaskToBack();
-      return false;
-    }
-
-    return true;
-  }
-
   @override
-  Widget build(BuildContext context) =>
-      WillPopScope(onWillPop: _onWillPop, child: widget.child);
+  Widget build(BuildContext context) => PopScope(
+        canPop: false,
+        onPopInvoked: (bool didPop) async {
+          if (didPop) {
+            return;
+          }
+
+          if (FlutterBackground.isBackgroundExecutionEnabled) {
+            await MoveToBackground.moveTaskToBack();
+            return;
+          }
+
+          Navigator.of(context).pop();
+        },
+        child: widget.child,
+      );
 }
