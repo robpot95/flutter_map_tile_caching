@@ -14,7 +14,7 @@ dependencies:
   better_open_file: ^3.6.5
   flutter:
     sdk: flutter
-  flutter_foreground_task: ^6.5.0
+  flutter_foreground_task: ^8.3.0
   flutter_map:
     git:
       url: https://github.com/robpot95/flutter_map.git
@@ -23,13 +23,13 @@ dependencies:
     path: ../
   flutter_speed_dial: ^7.0.0
   google_fonts: ^6.2.1
-  http: ^1.2.1
+  http: ^1.2.2
   intl: ^0.18.1
   latlong2: ^0.9.1
-  osm_nominatim: ^3.0.0
+  osm_nominatim: ^3.0.1
   path: ^1.9.0
   provider: ^6.1.2
-  shared_preferences: ^2.2.3
+  shared_preferences: ^2.3.1
   stream_transform: ^2.1.0
   validators: ^3.0.0
   version: ^3.0.2

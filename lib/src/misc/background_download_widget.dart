@@ -32,7 +32,7 @@ class _FMTCBackgroundDownloadState extends State<FMTCBackgroundDownload> {
   @override
   Widget build(BuildContext context) => PopScope(
         canPop: false,
-        onPopInvoked: (bool didPop) async {
+        onPopInvokedWithResult: (bool didPop, _) async {
           if (didPop) {
             return;
           }

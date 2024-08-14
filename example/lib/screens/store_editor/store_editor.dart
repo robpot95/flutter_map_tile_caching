@@ -44,7 +44,7 @@ class _StoreEditorPopupState extends State<StoreEditorPopup> {
 
   @override
   Widget build(BuildContext context) => PopScope(
-        onPopInvoked: (bool didPop) {
+        onPopInvokedWithResult: (bool didPop, _) async {
           if (didPop) {
             return;
           }
