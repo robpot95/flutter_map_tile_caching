@@ -35,7 +35,7 @@ AppBar buildHeader({
 
             // Give the asynchronus validation a chance
             await Future.delayed(const Duration(seconds: 1));
-            if (!mounted) return;
+            if (!context.mounted) return;
 
             if (formKey.currentState!.validate()) {
               formKey.currentState!.save();
@@ -66,7 +66,7 @@ AppBar buildHeader({
                 );
               }
 
-              if (!mounted) return;
+              if (!context.mounted) return;
               if (widget.isStoreInUse && widget.existingStoreName != null) {
                 Provider.of<GeneralProvider>(context, listen: false)
                     .currentStore = newStoreName;

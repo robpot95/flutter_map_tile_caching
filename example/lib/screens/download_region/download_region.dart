@@ -127,7 +127,9 @@ class _DownloadRegionPopupState extends State<DownloadRegionPopup> {
                                           .asBroadcastStream(),
                                     );
 
-                                    if (mounted) Navigator.of(context).pop();
+                                    if (context.mounted) {
+                                      Navigator.of(context).pop();
+                                    }
                                   },
                             child: const Text('Foreground'),
                           ),
@@ -174,7 +176,9 @@ class _DownloadRegionPopupState extends State<DownloadRegionPopup> {
                                       ),
                                     );
 
-                                    if (mounted) Navigator.of(context).pop();
+                                    if (context.mounted) {
+                                      Navigator.of(context).pop();
+                                    }
                                   },
                             child: const Text('Background'),
                           ),

@@ -44,8 +44,13 @@ class Header extends StatelessWidget {
               isScrollControlled: true,
               builder: (_) => const MinMaxZoomControllerPopup(),
             ).then(
-              (_) => Provider.of<DownloadProvider>(context, listen: false)
-                  .triggerManualPolygonRecalc(),
+              (_) {
+                if (!context.mounted) {
+                  return;
+                }
+                Provider.of<DownloadProvider>(context, listen: false)
+                    .triggerManualPolygonRecalc();
+              },
             ),
             icon: const Icon(Icons.zoom_in),
           ),
@@ -56,8 +61,14 @@ class Header extends StatelessWidget {
               isScrollControlled: true,
               builder: (_) => const ShapeControllerPopup(),
             ).then(
-              (_) => Provider.of<DownloadProvider>(context, listen: false)
-                  .triggerManualPolygonRecalc(),
+              (_) {
+                if (!context.mounted) {
+                  return;
+                }
+
+                Provider.of<DownloadProvider>(context, listen: false)
+                    .triggerManualPolygonRecalc();
+              },
             ),
             icon: const Icon(Icons.select_all),
           ),

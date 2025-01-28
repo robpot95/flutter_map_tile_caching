@@ -68,7 +68,7 @@ class _RecoveryListState extends State<RecoveryList> {
                         onPressed: () async {
                           await FMTC.instance.rootDirectory.recovery
                               .cancel(region.data!.id);
-                          if (mounted) {
+                          if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('Deleted Recovery Information'),

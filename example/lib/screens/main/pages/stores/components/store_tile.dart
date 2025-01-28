@@ -187,7 +187,7 @@ class _StoreTileState extends State<StoreTile> {
                                             setState(
                                               () => _emptyingProgress = false,
                                             );
-                                            if (mounted) {
+                                            if (context.mounted) {
                                               ScaffoldMessenger.of(context)
                                                   .showSnackBar(
                                                 const SnackBar(
@@ -220,7 +220,7 @@ class _StoreTileState extends State<StoreTile> {
                                             setState(
                                               () => _exportingProgress = false,
                                             );
-                                            if (mounted) {
+                                            if (context.mounted) {
                                               ScaffoldMessenger.of(context)
                                                   .showSnackBar(
                                                 SnackBar(
