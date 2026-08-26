@@ -4,7 +4,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_map/plugin_api.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:meta/meta.dart';
 
 import 'base_region.dart';
 
@@ -101,14 +100,10 @@ class DownloadableRegion {
     required this.errorHandler,
   }) {
     if (minZoom > maxZoom) {
-      throw ArgumentError(
-        '`minZoom` should be less than or equal to `maxZoom`',
-      );
+      throw ArgumentError('`minZoom` should be less than or equal to `maxZoom`');
     }
     if (parallelThreads < 1) {
-      throw ArgumentError(
-        '`parallelThreads` should be more than or equal to 1. Set to 1 to disable multithreading',
-      );
+      throw ArgumentError('`parallelThreads` should be more than or equal to 1. Set to 1 to disable multithreading');
     }
   }
 

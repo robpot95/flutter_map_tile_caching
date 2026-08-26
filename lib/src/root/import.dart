@@ -28,38 +28,24 @@ class RootImport {
   /// It is recommended to leave [emptyCacheBeforePicking] as the default (`true`). Otherwise, the picker may use cached files as opposed to the real files, which may yield unexpected results. This is only effective on Android and iOS - other platforms cannot use caching.
   ///
   /// If any files are selected, a [Map] is returned: where the keys are the the selected filenames (without extensions), and the values will resolve to a [bool] specifying whether the import was successful or unsuccessful. Otherwise `null` will be returned.
-  Future<Map<String, Future<bool>>?> withGUI({
-    String fileExtension = 'fmtc',
-    bool emptyCacheBeforePicking = true,
-  }) async {
+  Future<Map<String, Future<bool>>?> withGUI({String fileExtension = 'fmtc', bool emptyCacheBeforePicking = true}) async {
     if (emptyCacheBeforePicking && (Platform.isAndroid || Platform.isIOS)) {
-      await FilePicker.platform.clearTemporaryFiles();
+      await FilePicker.clearTemporaryFiles();
     }
 
-    late final FilePickerResult? importPaths;
+    final importPaths = <PlatformFile>[];
     try {
-      importPaths = await FilePicker.platform.pickFiles(
-        dialogTitle: 'Import Cache Stores',
-        type: FileType.custom,
-        allowedExtensions: [fileExtension],
-        allowMultiple: true,
-      );
+      final result = await FilePicker.pickFiles(dialogTitle: 'Import Cache Stores', type: FileType.custom, allowedExtensions: [fileExtension]);
+      importPaths.addAll(result);
     } on PlatformException catch (_) {
-      importPaths = await FilePicker.platform.pickFiles(
-        dialogTitle: 'Import Cache Stores',
-        allowMultiple: true,
-      );
+      final result = await FilePicker.pickFiles(dialogTitle: 'Import Cache Stores');
+      importPaths.addAll(result);
     }
 
-    if (importPaths == null) return null;
+    if (importPaths.isEmpty) return null;
 
     return Map.fromEntries(
-      importPaths.files.where((f) => f.extension == fileExtension).map(
-            (pf) => MapEntry(
-              p.basenameWithoutExtension(pf.name),
-              manual(File(pf.path!)),
-            ),
-          ),
+      importPaths.where((f) => f.extension == fileExtension).map((pf) => MapEntry(p.basenameWithoutExtension(pf.name), manual(File(pf.path!)))),
     );
   }
 
@@ -74,15 +60,10 @@ class RootImport {
       return false;
     }
 
-    final String storeName =
-        p.basenameWithoutExtension(inputFile.absolute.path);
-    final StoreManagement storeManagement =
-        StoreDirectory(_rootDirectory, storeName, autoCreate: false).manage;
+    final String storeName = p.basenameWithoutExtension(inputFile.absolute.path);
+    final StoreManagement storeManagement = StoreDirectory(_rootDirectory, storeName, autoCreate: false).manage;
 
-    await compute(_import, {
-      _rootDirectory.access.stores > storeName:
-          await File(inputFile.absolute.path).readAsBytes(),
-    });
+    await compute(_import, {_rootDirectory.access.stores > storeName: await File(inputFile.absolute.path).readAsBytes()});
 
     if (await storeManagement.readyAsync) return true;
     return error(storeManagement);

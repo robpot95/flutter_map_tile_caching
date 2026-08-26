@@ -63,22 +63,14 @@ class DownloadProgress {
   /// Only applicable if sea tile removal is enabled, otherwise this value is always 0.
   ///
   /// Is equal to `100 - ((((successfulTiles - existingTiles) - seaTiles) / successfulTiles) * 100)`.
-  double get seaTilesDiscount => seaTiles == 0
-      ? 0
-      : 100 -
-          ((((successfulTiles - existingTiles) - seaTiles) / successfulTiles) *
-              100);
+  double get seaTilesDiscount => seaTiles == 0 ? 0 : 100 - ((((successfulTiles - existingTiles) - seaTiles) / successfulTiles) * 100);
 
   /// Percentage of tiles saved by using redownload prevention (ie. discount)
   ///
   /// Only applicable if redownload prevention is enabled, otherwise this value is always 0.
   ///
   /// Is equal to `100 -  ((((successfulTiles - seaTiles) - existingTiles) / successfulTiles) * 100)`.
-  double get existingTilesDiscount => existingTiles == 0
-      ? 0
-      : 100 -
-          ((((successfulTiles - seaTiles) - existingTiles) / successfulTiles) *
-              100);
+  double get existingTilesDiscount => existingTiles == 0 ? 0 : 100 - ((((successfulTiles - seaTiles) - existingTiles) / successfulTiles) * 100);
 
   /// Approximate percentage of process complete
   ///
@@ -93,9 +85,7 @@ class DownloadProgress {
   /// Estimate duration for entire download process, using [averageTPS]
   ///
   /// Uses an exponentially smoothed moving average algorithm instead of a linear average algorithm. This should lead to more accurate duration calculations, but may not return the same result as expected. The full original algorithm (written in Python) can be found at https://stackoverflow.com/a/54264570/11846040.
-  Duration get estTotalDuration => Duration(
-        seconds: (maxTiles / averageTPS.clamp(1, double.infinity)).round(),
-      );
+  Duration get estTotalDuration => Duration(seconds: (maxTiles / averageTPS.clamp(1, double.infinity)).round());
 
   /// Estimate remaining duration until the end of the download process
   ///
@@ -114,20 +104,20 @@ class DownloadProgress {
     required this.existingTiles,
     required this.duration,
     required this.tileImage,
-    required InternalProgressTimingManagement progressManagement,
-  }) : _progressManagement = progressManagement;
+    required this._progressManagement,
+  });
 
   /// Create an empty placeholder (all values set to 0 or empty) [DownloadProgress], useful for `initialData` in a [StreamBuilder]
   DownloadProgress.empty()
-      : downloadID = 0,
-        successfulTiles = 0,
-        failedTiles = [],
-        successfulSize = 0,
-        maxTiles = 1,
-        seaTiles = 0,
-        existingTiles = 0,
-        duration = Duration.zero,
-        _progressManagement = InternalProgressTimingManagement();
+    : downloadID = 0,
+      successfulTiles = 0,
+      failedTiles = [],
+      successfulSize = 0,
+      maxTiles = 1,
+      seaTiles = 0,
+      existingTiles = 0,
+      duration = Duration.zero,
+      _progressManagement = InternalProgressTimingManagement();
 
   //! GENERAL OBJECT STUFF !//
 
@@ -146,10 +136,5 @@ class DownloadProgress {
 
   @override
   int get hashCode =>
-      successfulTiles.hashCode ^
-      failedTiles.hashCode ^
-      maxTiles.hashCode ^
-      seaTiles.hashCode ^
-      existingTiles.hashCode ^
-      duration.hashCode;
+      successfulTiles.hashCode ^ failedTiles.hashCode ^ maxTiles.hashCode ^ seaTiles.hashCode ^ existingTiles.hashCode ^ duration.hashCode;
 }

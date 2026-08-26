@@ -88,11 +88,7 @@ class DownloadManagement {
     _queue = Queue(parallel: region.parallelThreads);
     _streamController = StreamController();
 
-    yield* _startDownload(
-      tileProviderSettings: tileProviderSettings,
-      region: region,
-      tiles: await _generateTilesComputer(region),
-    );
+    yield* _startDownload(tileProviderSettings: tileProviderSettings, region: region, tiles: await _generateTilesComputer(region));
   }
 
   /// Download a specified [DownloadableRegion] in the background, and show a progress notification (by default)
@@ -139,32 +135,21 @@ class DownloadManagement {
         androidConfig: FlutterBackgroundAndroidConfig(
           notificationTitle: backgroundNotificationTitle,
           notificationText: backgroundNotificationText,
-          notificationIcon: backgroundNotificationIcon ??
-              const AndroidResource(name: 'ic_launcher', defType: 'mipmap'),
+          notificationIcon: backgroundNotificationIcon ?? const AndroidResource(name: 'ic_launcher', defType: 'mipmap'),
         ),
       );
       if (!initSuccess) {
-        throw StateError(
-          'Failed to acquire the necessary permissions to run the background process',
-        );
+        throw StateError('Failed to acquire the necessary permissions to run the background process');
       }
 
-      final bool startSuccess =
-          await FlutterBackground.enableBackgroundExecution();
+      final bool startSuccess = await FlutterBackground.enableBackgroundExecution();
       if (!startSuccess) {
         throw StateError('Failed to start the background process');
       }
 
       final notification = FlutterLocalNotificationsPlugin();
-      await notification.initialize(
-        InitializationSettings(
-          android: AndroidInitializationSettings(progressNotificationIcon),
-        ),
-      );
-      await notification
-          .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()!
-          .requestNotificationsPermission();
+      await notification.initialize(settings: .new(android: .new(progressNotificationIcon)));
+      await notification.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()!.requestNotificationsPermission();
 
       final Stream<DownloadProgress> downloadStream = startForeground(
         region: region,
@@ -174,27 +159,23 @@ class DownloadManagement {
       if (await downloadStream.isEmpty) return cancel();
 
       final AndroidNotificationDetails androidNotificationDetails =
-          progressNotificationConfig?.copyWith(
-                channelId: 'FMTCMapDownloader',
-                ongoing: true,
-              ) ??
-              const AndroidNotificationDetails(
-                'FMTCMapDownloader',
-                'Map Download Progress',
-                channelDescription:
-                    'Displays progress notifications to inform the user about the progress of their map download',
-                showProgress: true,
-                visibility: NotificationVisibility.public,
-                subText: 'Map Downloader',
-                importance: Importance.low,
-                priority: Priority.low,
-                showWhen: false,
-                playSound: false,
-                enableVibration: false,
-                onlyAlertOnce: true,
-                autoCancel: false,
-                ongoing: true,
-              );
+          progressNotificationConfig?.copyWith(channelId: 'FMTCMapDownloader', ongoing: true) ??
+          const AndroidNotificationDetails(
+            'FMTCMapDownloader',
+            'Map Download Progress',
+            channelDescription: 'Displays progress notifications to inform the user about the progress of their map download',
+            showProgress: true,
+            visibility: NotificationVisibility.public,
+            subText: 'Map Downloader',
+            importance: Importance.low,
+            priority: Priority.low,
+            showWhen: false,
+            playSound: false,
+            enableVibration: false,
+            onlyAlertOnce: true,
+            autoCancel: false,
+            ongoing: true,
+          );
 
       late final StreamSubscription<DownloadProgress> subscription;
 
@@ -202,22 +183,19 @@ class DownloadManagement {
         (event) async {
           if (showProgressNotification) {
             await notification.show(
-              0,
-              progressNotificationTitle,
-              progressNotificationBody == null
+              id: 0,
+              title: progressNotificationTitle,
+              body: progressNotificationBody == null
                   ? '${event.attemptedTiles}/${event.maxTiles} (${event.percentageProgress.round()}%)'
                   : progressNotificationBody(event),
-              NotificationDetails(
-                android: androidNotificationDetails.copyWith(
-                  maxProgress: event.maxTiles,
-                  progress: event.attemptedTiles,
-                ),
+              notificationDetails: .new(
+                android: androidNotificationDetails.copyWith(maxProgress: event.maxTiles, progress: event.attemptedTiles),
               ),
             );
           }
         },
         onDone: () async {
-          if (showProgressNotification) await notification.cancel(0);
+          if (showProgressNotification) await notification.cancel(id: 0);
           await subscription.cancel();
           await cancel();
         },
@@ -225,8 +203,7 @@ class DownloadManagement {
     } else {
       throw PlatformException(
         code: 'notAndroid',
-        message:
-            'The background download feature is only available on Android due to internal limitations.',
+        message: 'The background download feature is only available on Android due to internal limitations.',
       );
     }
   }
@@ -236,8 +213,7 @@ class DownloadManagement {
   /// This does not take into account sea tile removal or redownload prevention, as these are handled in the download area of the code.
   ///
   /// Returns an `int` which is the number of tiles.
-  Future<int> check(DownloadableRegion region) async =>
-      (await _generateTilesComputer(region)).length;
+  Future<int> check(DownloadableRegion region) async => (await _generateTilesComputer(region)).length;
 
   /// Cancels the ongoing foreground download and recovery session (within the current object)
   ///
@@ -265,16 +241,12 @@ class DownloadManagement {
   /// If [requestIfDenied] is `true` (default), and the permission has not been granted, an intrusive system dialog/screen will be displayed. If `false`, this method will only check whether it has been granted or not.
   ///
   /// Will return `true` if permission was granted, `false` if the permission was denied.
-  Future<bool> requestIgnoreBatteryOptimizations({
-    bool requestIfDenied = true,
-  }) async {
+  Future<bool> requestIgnoreBatteryOptimizations({bool requestIfDenied = true}) async {
     if (Platform.isAndroid) {
-      final PermissionStatus status =
-          await Permission.ignoreBatteryOptimizations.status;
+      final PermissionStatus status = await Permission.ignoreBatteryOptimizations.status;
 
       if ((status.isDenied || status.isLimited) && requestIfDenied) {
-        final PermissionStatus statusAfter =
-            await Permission.ignoreBatteryOptimizations.request();
+        final PermissionStatus statusAfter = await Permission.ignoreBatteryOptimizations.request();
         if (statusAfter.isGranted) return true;
         return false;
       } else if (status.isGranted) {
@@ -285,8 +257,7 @@ class DownloadManagement {
     } else {
       throw PlatformException(
         code: 'notAndroid',
-        message:
-            'The background download feature is only available on Android due to internal limitations.',
+        message: 'The background download feature is only available on Android due to internal limitations.',
       );
     }
   }
@@ -296,22 +267,13 @@ class DownloadManagement {
     required DownloadableRegion region,
     required List<TileCoordinates> tiles,
   }) async* {
-    final FMTCTileProvider tileProvider =
-        _storeDirectory.getTileProvider(tileProviderSettings);
+    final FMTCTileProvider tileProvider = _storeDirectory.getTileProvider(tileProviderSettings);
     final http.Client client = http.Client();
 
     Uint8List? seaTileBytes;
     if (region.seaTileRemoval) {
       try {
-        seaTileBytes = (await client.get(
-          Uri.parse(
-            tileProvider.getTileUrl(
-              const TileCoordinates(0, 0, 17),
-              region.options,
-            ),
-          ),
-        ))
-            .bodyBytes;
+        seaTileBytes = (await client.get(Uri.parse(tileProvider.getTileUrl(const TileCoordinates(0, 0, 17), region.options)))).bodyBytes;
       } catch (e) {
         seaTileBytes = null;
       }
@@ -374,16 +336,13 @@ class DownloadManagement {
     client.close();
   }
 
-  static Future<List<TileCoordinates>> _generateTilesComputer(
-    DownloadableRegion region, {
-    bool applyRange = true,
-  }) async {
+  static Future<List<TileCoordinates>> _generateTilesComputer(DownloadableRegion region, {bool applyRange = true}) async {
     final List<TileCoordinates> tiles = await compute(
       region.type == RegionType.rectangle
           ? rectangleTiles
           : region.type == RegionType.circle
-              ? circleTiles
-              : lineTiles,
+          ? circleTiles
+          : lineTiles,
       {
         'bounds': LatLngBounds.fromPoints(region.points),
         'circleOutline': region.points,
@@ -391,8 +350,7 @@ class DownloadManagement {
         'minZoom': region.minZoom,
         'maxZoom': region.maxZoom,
         'crs': region.crs,
-        'tileSize':
-            CustomPoint(region.options.tileSize, region.options.tileSize),
+        'tileSize': CustomPoint(region.options.tileSize, region.options.tileSize),
       },
     );
 

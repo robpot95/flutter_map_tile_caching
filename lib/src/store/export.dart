@@ -19,8 +19,7 @@ class StoreExport {
   final StoreDirectory _storeDirectory;
 
   /// Provides import and export functionality for a [StoreDirectory]
-  StoreExport(this._storeDirectory)
-      : _access = StoreAccess(_storeDirectory).real;
+  StoreExport(this._storeDirectory) : _access = StoreAccess(_storeDirectory).real;
 
   /// Shorthand for [StoreAccess.real], used commonly throughout
   final Directory _access;
@@ -37,35 +36,51 @@ class StoreExport {
   /// Exported files are named as the store name plus the [fileExtension] ('fmtc' by default).
   ///
   /// Returns `true` when successful, otherwise `false` when unsuccessful or unknown.
-  Future<bool> withGUI({
-    String fileExtension = 'fmtc',
-    bool? forceFilePicker,
-    BuildContext? context,
-  }) async {
-    if (forceFilePicker ??
-        Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
-      final String? outputPath = await FilePicker.platform.saveFile(
-        dialogTitle: 'Export Cache Store',
+  Future<bool> withGUI({String fileExtension = 'fmtc', bool? forceFilePicker, BuildContext? context}) async {
+    final isDesktop = forceFilePicker ?? (Platform.isLinux || Platform.isMacOS || Platform.isWindows);
+
+    if (isDesktop) {
+      // 1. Generate export file and bytes
+      final File exportFile = _access >>> '${_storeDirectory.storeName}.$fileExtension';
+      await manual(exportFile);
+      final Uint8List bytes = await exportFile.readAsBytes();
+
+      // 2. Prompt save dialog using updated saveFile signature
+      final Uri? savedUri = await FilePicker.saveFile(
         fileName: '${_storeDirectory.storeName}.$fileExtension',
+        bytes: bytes,
+        dialogTitle: 'Export Cache Store',
         type: FileType.custom,
         allowedExtensions: [fileExtension],
       );
 
-      if (outputPath == null) return false;
+      // Clean up local temp file if needed
+      if (await exportFile.exists()) {
+        await exportFile.delete();
+      }
 
-      await manual(File(outputPath));
-      return true;
+      return savedUri != null;
     } else {
-      final File exportFile =
-          _access >>> '${_storeDirectory.storeName}.$fileExtension';
-      final box = context!.findRenderObject() as RenderBox?;
+      // 1. Capture render bounds before async ops
+      Rect? sharePositionOrigin;
+      if (context != null && context.mounted) {
+        final box = context.findRenderObject() as RenderBox?;
+        if (box != null && box.hasSize) {
+          sharePositionOrigin = box.localToGlobal(Offset.zero) & box.size;
+        }
+      }
 
+      // 2. Perform export & share
+      final File exportFile = _access >>> '${_storeDirectory.storeName}.$fileExtension';
       await manual(exportFile);
-      final ShareResult result = await Share.shareXFiles(
-        [XFile(exportFile.absolute.path)],
-        sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
+
+      final ShareResult result = await SharePlus.instance.share(
+        ShareParams(files: [XFile(exportFile.absolute.path)], sharePositionOrigin: sharePositionOrigin),
       );
-      await exportFile.delete();
+
+      if (await exportFile.exists()) {
+        await exportFile.delete();
+      }
 
       return result.status == ShareResultStatus.success;
     }

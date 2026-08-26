@@ -24,9 +24,7 @@ class RootStats {
   final bool _forceRecalculation;
 
   /// Provides statistics about a [RootDirectory]
-  RootStats(this._rootDirectory, {bool forceRecalculation = false})
-      : _forceRecalculation = forceRecalculation,
-        _access = RootAccess(_rootDirectory);
+  RootStats(this._rootDirectory, {this._forceRecalculation = false}) : _access = RootAccess(_rootDirectory);
 
   /// Shorthand for [RootDirectory.access], used commonly throughout
   final RootAccess _access;
@@ -52,10 +50,7 @@ class RootStats {
   /// Get a cached statistic or fallback to a calculation asynchronously
   ///
   /// Stands for 'CachedStatisticGetterAsynchronous'
-  Future<String> _csgAsync(
-    String statType,
-    Future<dynamic> Function() calculation,
-  ) async {
+  Future<String> _csgAsync(String statType, Future<dynamic> Function() calculation) async {
     final File f = _access.stats >>> '$statType.cache';
 
     if (!_forceRecalculation && await f.exists()) {
@@ -94,10 +89,7 @@ class RootStats {
       if (statType != null) {
         await (_access.stats >>> '$statType.cache').delete();
       } else {
-        await Future.wait([
-          (_access.stats >>> 'length.cache').delete(),
-          (_access.stats >>> 'size.cache').delete(),
-        ]);
+        await Future.wait([(_access.stats >>> 'length.cache').delete(), (_access.stats >>> 'size.cache').delete()]);
       }
       // ignore: empty_catches
     } catch (e) {}
@@ -108,15 +100,7 @@ class RootStats {
   /// For asynchronous version, see [storesAvailableAsync]. Note that this statistic is not cached for performance, as the effect would be negligible.
   List<StoreDirectory> get storesAvailable => _access.stores
       .listSync()
-      .map(
-        (e) => e is Directory
-            ? StoreDirectory(
-                _rootDirectory,
-                p.split(e.absolute.path).last,
-                autoCreate: false,
-              )
-            : null,
-      )
+      .map((e) => e is Directory ? StoreDirectory(_rootDirectory, p.split(e.absolute.path).last, autoCreate: false) : null)
       .whereType<StoreDirectory>()
       .toList();
 
@@ -125,15 +109,7 @@ class RootStats {
   /// For synchronous version, see [storesAvailable]. Note that this statistic is not cached for performance, as the effect would be negligible.
   Future<List<StoreDirectory>> get storesAvailableAsync async =>
       (await (await _access.stores.listWithExists())
-              .map(
-                (e) => e is Directory
-                    ? StoreDirectory(
-                        _rootDirectory,
-                        p.split(e.absolute.path).last,
-                        autoCreate: false,
-                      )
-                    : null,
-              )
+              .map((e) => e is Directory ? StoreDirectory(_rootDirectory, p.split(e.absolute.path).last, autoCreate: false) : null)
               .toList())
           .whereType<StoreDirectory>()
           .toList();
@@ -145,14 +121,7 @@ class RootStats {
   /// Technically just sums up the size of all sub-stores, thus ignoring any cached root statistics, etc.
   ///
   /// Includes all files in all stores, not necessarily just tiles.
-  double get rootSize =>
-      double.tryParse(
-        _csgSync(
-          'size',
-          () => storesAvailable.map((e) => e.stats.storeSize).sum,
-        ),
-      ) ??
-      0;
+  double get rootSize => double.tryParse(_csgSync('size', () => storesAvailable.map((e) => e.stats.storeSize).sum)) ?? 0;
 
   /// Retrieve the size of the root in kibibytes (KiB)
   ///
@@ -163,13 +132,7 @@ class RootStats {
   /// Includes all files in all stores, not necessarily just tiles.
   Future<double> get rootSizeAsync async =>
       double.tryParse(
-        await _csgAsync(
-          'size',
-          () async => (await Future.wait(
-            (await storesAvailableAsync).map((e) => e.stats.storeSizeAsync),
-          ))
-              .sum,
-        ),
+        await _csgAsync('size', () async => (await Future.wait((await storesAvailableAsync).map((e) => e.stats.storeSizeAsync))).sum),
       ) ??
       0;
 
@@ -178,14 +141,7 @@ class RootStats {
   /// For asynchronous version, see [rootLengthAsync].
   ///
   /// Only includes tiles stored, not necessarily all files.
-  int get rootLength =>
-      int.tryParse(
-        _csgSync(
-          'length',
-          () => storesAvailable.map((e) => e.stats.storeLength).sum,
-        ),
-      ) ??
-      0;
+  int get rootLength => int.tryParse(_csgSync('length', () => storesAvailable.map((e) => e.stats.storeLength).sum)) ?? 0;
 
   /// Retrieve the number of stored tiles in all sub-stores
   ///
@@ -194,13 +150,7 @@ class RootStats {
   /// Only includes tiles stored, not necessarily all files.
   Future<int> get rootLengthAsync async =>
       int.tryParse(
-        await _csgAsync(
-          'length',
-          () async => (await Future.wait(
-            (await storesAvailableAsync).map((e) => e.stats.storeLengthAsync),
-          ))
-              .sum,
-        ),
+        await _csgAsync('length', () async => (await Future.wait((await storesAvailableAsync).map((e) => e.stats.storeLengthAsync))).sum),
       ) ??
       0;
 
@@ -222,53 +172,30 @@ class RootStats {
   Stream<void> watchChanges({
     Duration? debounce = const Duration(milliseconds: 200),
     List<StoreDirectory> recursive = const [],
-    List<ChangeType> events = const [
-      ChangeType.ADD,
-      ChangeType.MODIFY,
-      ChangeType.REMOVE,
-    ],
+    List<ChangeType> events = const [ChangeType.ADD, ChangeType.MODIFY, ChangeType.REMOVE],
     List<RootParts> rootParts = RootParts.values,
     List<StoreParts> storeParts = StoreParts.values,
   }) {
-    Stream<void> constructStream(Directory dir) => FileSystemEntity
-            .isWatchSupported
+    Stream<void> constructStream(Directory dir) => FileSystemEntity.isWatchSupported
         ? dir
-            .watch(
-              events: [
-                events.contains(ChangeType.ADD) ? FileSystemEvent.create : null,
-                events.contains(ChangeType.MODIFY)
-                    ? FileSystemEvent.modify
-                    : null,
-                events.contains(ChangeType.MODIFY)
-                    ? FileSystemEvent.move
-                    : null,
-                events.contains(ChangeType.REMOVE)
-                    ? FileSystemEvent.delete
-                    : null,
-              ].whereType<int>().reduce((v, e) => v | e),
-            )
-            .map<void>((e) {})
-        : DirectoryWatcher(dir.absolute.path)
-            .events
-            .where((evt) => events.contains(evt.type))
-            .map<void>((e) {});
+              .watch(
+                events: [
+                  events.contains(ChangeType.ADD) ? FileSystemEvent.create : null,
+                  events.contains(ChangeType.MODIFY) ? FileSystemEvent.modify : null,
+                  events.contains(ChangeType.MODIFY) ? FileSystemEvent.move : null,
+                  events.contains(ChangeType.REMOVE) ? FileSystemEvent.delete : null,
+                ].whereType<int>().reduce((v, e) => v | e),
+              )
+              .map<void>((e) {})
+        : DirectoryWatcher(dir.absolute.path).events.where((evt) => events.contains(evt.type)).map<void>((e) {});
 
     final Stream<void> stream = constructStream(_access.real)
-        .mergeAll(
-      recursive.map(
-        (e) => e.stats.watchChanges(
-          debounce: debounce,
-          events: events,
-          storeParts: storeParts,
-        ),
-      ),
-    )
+        .mergeAll(recursive.map((e) => e.stats.watchChanges(debounce: debounce, events: events, storeParts: storeParts)))
         .mergeAll([
-      if (rootParts.contains(RootParts.recovery))
-        constructStream(_access.recovery),
-      if (rootParts.contains(RootParts.stats)) constructStream(_access.stats),
-      if (rootParts.contains(RootParts.stores)) constructStream(_access.stores),
-    ]);
+          if (rootParts.contains(RootParts.recovery)) constructStream(_access.recovery),
+          if (rootParts.contains(RootParts.stats)) constructStream(_access.stats),
+          if (rootParts.contains(RootParts.stores)) constructStream(_access.stores),
+        ]);
 
     return debounce == null ? stream : stream.debounce(debounce);
   }

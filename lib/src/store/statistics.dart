@@ -21,16 +21,13 @@ class StoreStats {
   final bool _forceRecalculation;
 
   /// Provides statistics about a [StoreDirectory]
-  StoreStats(this._storeDirectory, {bool forceRecalculation = false})
-      : _forceRecalculation = forceRecalculation,
-        _access = StoreAccess(_storeDirectory);
+  StoreStats(this._storeDirectory, {this._forceRecalculation = false}) : _access = StoreAccess(_storeDirectory);
 
   /// Shorthand for [StoreDirectory.access], used commonly throughout
   final StoreAccess _access;
 
   /// Force re-calculation for all statistics instead of retrieving from stats cache
-  StoreStats get noCache =>
-      StoreStats(_storeDirectory, forceRecalculation: true);
+  StoreStats get noCache => StoreStats(_storeDirectory, forceRecalculation: true);
 
   /// Get a cached statistic or fallback to a calculation synchronously
   ///
@@ -50,10 +47,7 @@ class StoreStats {
   /// Get a cached statistic or fallback to a calculation asynchronously
   ///
   /// Stands for 'CachedStatisticGetterAsynchronous'
-  Future<String> _csgAsync(
-    String statType,
-    Future<dynamic> Function() calculation,
-  ) async {
+  Future<String> _csgAsync(String statType, Future<dynamic> Function() calculation) async {
     final File f = _access.stats >>> '$statType.cache';
 
     if (!_forceRecalculation && await f.exists()) {
@@ -70,19 +64,8 @@ class StoreStats {
   /// For asynchronous version, see [invalidateCachedStatisticsAsync].
   ///
   /// [statTypes] dictates the types of statistics to remove, defaulting to only 'length' and 'size'. Set to `null` to remove all types.
-  void invalidateCachedStatistics({
-    List<String>? statTypes = const [
-      'length',
-      'size',
-    ],
-  }) =>
-      (statTypes ??
-              [
-                'length',
-                'size',
-                'cacheHits',
-                'cacheMisses',
-              ])
+  void invalidateCachedStatistics({List<String>? statTypes = const ['length', 'size']}) =>
+      (statTypes ?? ['length', 'size', 'cacheHits', 'cacheMisses'])
           .map((e) => _access.stats >>> '$e.cache')
           .forEach((e) => e.existsSync() ? e.deleteSync() : null);
 
@@ -91,25 +74,12 @@ class StoreStats {
   /// For synchronous version, see [invalidateCachedStatistics].
   ///
   /// [statTypes] dictates the types of statistics to remove, defaulting to only 'length' and 'size'. Set to `null` to remove all types.
-  Future<void> invalidateCachedStatisticsAsync({
-    List<String>? statTypes = const [
-      'length',
-      'size',
-    ],
-  }) =>
-      Future.wait(
-        (statTypes ??
-                [
-                  'length',
-                  'size',
-                  'cacheHits',
-                  'cacheMisses',
-                ])
-            .map((e) async {
-          final File file = _access.stats >>> '$e.cache';
-          return await file.exists() ? file.delete() : null;
-        }),
-      );
+  Future<void> invalidateCachedStatisticsAsync({List<String>? statTypes = const ['length', 'size']}) => Future.wait(
+    (statTypes ?? ['length', 'size', 'cacheHits', 'cacheMisses']).map((e) async {
+      final File file = _access.stats >>> '$e.cache';
+      return await file.exists() ? file.delete() : null;
+    }),
+  );
 
   /// Retrieve the size of the store in kibibytes (KiB)
   ///
@@ -117,16 +87,7 @@ class StoreStats {
   ///
   /// Includes all files beneath the store, not necessarily just tiles.
   double get storeSize =>
-      double.tryParse(
-        _csgSync(
-          'size',
-          () => _access.real
-              .listSync(recursive: true)
-              .map((e) => e is File ? e.lengthSync() / 1024 : 0)
-              .sum,
-        ),
-      ) ??
-      0;
+      double.tryParse(_csgSync('size', () => _access.real.listSync(recursive: true).map((e) => e is File ? e.lengthSync() / 1024 : 0).sum)) ?? 0;
 
   /// Retrieve the size of the store in kibibytes (KiB)
   ///
@@ -137,13 +98,7 @@ class StoreStats {
       double.tryParse(
         await _csgAsync(
           'size',
-          () async => (await _access.real
-                  .list(recursive: true)
-                  .asyncMap(
-                    (e) async => e is File ? await e.length() / 1024 : 0,
-                  )
-                  .toList())
-              .sum,
+          () async => (await _access.real.list(recursive: true).asyncMap((e) async => e is File ? await e.length() / 1024 : 0).toList()).sum,
         ),
       ) ??
       0;
@@ -153,23 +108,14 @@ class StoreStats {
   /// For asynchronous version, see [storeLengthAsync].
   ///
   /// Only includes tiles stored, not necessarily all files.
-  int get storeLength =>
-      int.tryParse(_csgSync('length', () => _access.tiles.listSync().length)) ??
-      0;
+  int get storeLength => int.tryParse(_csgSync('length', () => _access.tiles.listSync().length)) ?? 0;
 
   /// Retrieve the number of stored tiles in a store
   ///
   /// For synchronous version, see [storeLength].
   ///
   /// Only includes tiles stored, not necessarily all files.
-  Future<int> get storeLengthAsync async =>
-      int.tryParse(
-        await _csgAsync(
-          'length',
-          () async => (await _access.tiles.listWithExists()).length,
-        ),
-      ) ??
-      0;
+  Future<int> get storeLengthAsync async => int.tryParse(await _csgAsync('length', () async => (await _access.tiles.listWithExists()).length)) ?? 0;
 
   /// Retrieve the number of tiles that were successfully retrieved from the store during browsing
   ///
@@ -183,9 +129,7 @@ class StoreStats {
   /// For synchronous version, see [cacheHits].
   ///
   /// If using [noCache], this will always return 0.
-  Future<int> get cacheHitsAsync async =>
-      int.tryParse(await _csgAsync('cacheHits', () => Future.sync(() => 0))) ??
-      0;
+  Future<int> get cacheHitsAsync async => int.tryParse(await _csgAsync('cacheHits', () => Future.sync(() => 0))) ?? 0;
 
   /// Retrieve the number of tiles that were unsuccessfully retrieved from the store during browsing
   ///
@@ -199,11 +143,7 @@ class StoreStats {
   /// For synchronous version, see [cacheMisses].
   ///
   /// Includes tiles that needed updating. If using [noCache], this will always return 0.
-  Future<int> get cacheMissesAsync async =>
-      int.tryParse(
-        await _csgAsync('cacheMisses', () => Future.sync(() => 0)),
-      ) ??
-      0;
+  Future<int> get cacheMissesAsync async => int.tryParse(await _csgAsync('cacheMisses', () => Future.sync(() => 0))) ?? 0;
 
   /// Watch for changes in the current store
   ///
@@ -220,39 +160,24 @@ class StoreStats {
   /// ```
   Stream<void> watchChanges({
     Duration? debounce = const Duration(milliseconds: 200),
-    List<ChangeType> events = const [
-      ChangeType.ADD,
-      ChangeType.MODIFY,
-      ChangeType.REMOVE,
-    ],
+    List<ChangeType> events = const [ChangeType.ADD, ChangeType.MODIFY, ChangeType.REMOVE],
     List<StoreParts> storeParts = StoreParts.values,
   }) {
-    Stream<void> constructStream(Directory dir) => FileSystemEntity
-            .isWatchSupported
+    Stream<void> constructStream(Directory dir) => FileSystemEntity.isWatchSupported
         ? dir
-            .watch(
-              events: [
-                events.contains(ChangeType.ADD) ? FileSystemEvent.create : null,
-                events.contains(ChangeType.MODIFY)
-                    ? FileSystemEvent.modify
-                    : null,
-                events.contains(ChangeType.MODIFY)
-                    ? FileSystemEvent.move
-                    : null,
-                events.contains(ChangeType.REMOVE)
-                    ? FileSystemEvent.delete
-                    : null,
-              ].whereType<int>().reduce((v, e) => v | e),
-            )
-            .map<void>((e) {})
-        : DirectoryWatcher(dir.absolute.path)
-            .events
-            .where((evt) => events.contains(evt.type))
-            .map<void>((e) {});
+              .watch(
+                events: [
+                  events.contains(ChangeType.ADD) ? FileSystemEvent.create : null,
+                  events.contains(ChangeType.MODIFY) ? FileSystemEvent.modify : null,
+                  events.contains(ChangeType.MODIFY) ? FileSystemEvent.move : null,
+                  events.contains(ChangeType.REMOVE) ? FileSystemEvent.delete : null,
+                ].whereType<int>().reduce((v, e) => v | e),
+              )
+              .map<void>((e) {})
+        : DirectoryWatcher(dir.absolute.path).events.where((evt) => events.contains(evt.type)).map<void>((e) {});
 
     final Stream<void> stream = constructStream(_access.real).mergeAll([
-      if (storeParts.contains(StoreParts.metadata))
-        constructStream(_access.metadata),
+      if (storeParts.contains(StoreParts.metadata)) constructStream(_access.metadata),
       if (storeParts.contains(StoreParts.stats)) constructStream(_access.stats),
       if (storeParts.contains(StoreParts.tiles)) constructStream(_access.tiles),
     ]);
