@@ -1,4 +1,4 @@
-// Copyright © Luka S (JaffaKetchup) under GPL-v3
+/*// Copyright © Luka S (JaffaKetchup) under GPL-v3
 // A full license can be found at .\LICENSE
 
 import 'package:flutter/widgets.dart';
@@ -47,3 +47,4 @@ class _FMTCBackgroundDownloadState extends State<FMTCBackgroundDownload> {
         child: widget.child,
       );
 }
+*/

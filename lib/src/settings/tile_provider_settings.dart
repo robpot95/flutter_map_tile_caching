@@ -71,8 +71,5 @@ class FMTCTileProviderSettings {
   }
 
   @override
-  int get hashCode =>
-      behavior.hashCode ^
-      cachedValidDuration.hashCode ^
-      maxStoreLength.hashCode;
+  int get hashCode => behavior.hashCode ^ cachedValidDuration.hashCode ^ maxStoreLength.hashCode;
 }
