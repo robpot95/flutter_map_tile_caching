@@ -33,23 +33,21 @@ Stream<TileProgress> bulkDownloader({
   for (final TileCoordinates coord in tiles) {
     queue
         .add(
-      () => _getAndSaveTile(
-        provider: provider,
-        coord: coord,
-        options: options,
-        client: client,
-        errorHandler: errorHandler,
-        preventRedownload: preventRedownload,
-        seaTileBytes: seaTileBytes,
-        downloadID: downloadID,
-        progressManagement: progressManagement,
-      ),
-    )
-        .then(
-      (e) {
-        if (!streamController.isClosed) streamController.add(e);
-      },
-    );
+          () => _getAndSaveTile(
+            provider: provider,
+            coord: coord,
+            options: options,
+            client: client,
+            errorHandler: errorHandler,
+            preventRedownload: preventRedownload,
+            seaTileBytes: seaTileBytes,
+            downloadID: downloadID,
+            progressManagement: progressManagement,
+          ),
+        )
+        .then((e) {
+          if (!streamController.isClosed) streamController.add(e);
+        });
   }
 
   return streamController.stream;
@@ -69,26 +67,20 @@ Future<TileProgress> _getAndSaveTile({
   final String networkUrl = provider.getTileUrl(coord, options);
   final String matcherUrl = provider.settings.obscureQueryParams(networkUrl);
 
-  final File file = provider.storeDirectory.access.tiles >>>
-      filesystemSanitiseValidate(
-        inputString: matcherUrl,
-        throwIfInvalid: false,
-      );
+  final File file = provider.storeDirectory.access.tiles >>> filesystemSanitiseValidate(inputString: matcherUrl, throwIfInvalid: false);
 
   final List<int> bytes = [];
 
   try {
     if (preventRedownload && await file.exists()) {
-      return TileProgress(
-        failedUrl: null,
-        wasSeaTile: false,
-        wasExistingTile: true,
-        tileImage: null,
-      );
+      return TileProgress(failedUrl: null, wasSeaTile: false, wasExistingTile: true, tileImage: null);
     }
 
-    final http.StreamedResponse response =
-        await client.send(http.Request('GET', Uri.parse(networkUrl)));
+    // Attach custom headers to the HTTP GET request
+    final http.Request request = http.Request('GET', Uri.parse(networkUrl));
+    request.headers.addAll(provider.settings.headers);
+
+    final http.StreamedResponse response = await client.send(request);
     final int totalBytes = response.contentLength ?? 0;
 
     int received = 0;
@@ -96,41 +88,19 @@ Future<TileProgress> _getAndSaveTile({
     await for (final List<int> evt in response.stream) {
       bytes.addAll(evt);
       received += evt.length;
-      progressManagement.progress[matcherUrl.hashCode] = TimestampProgress(
-        DateTime.now(),
-        received / totalBytes,
-      );
+      progressManagement.progress[matcherUrl.hashCode] = TimestampProgress(DateTime.now(), received / totalBytes);
     }
 
-    file.writeAsBytesSync(
-      bytes,
-      flush: true,
-    );
+    file.writeAsBytesSync(bytes, flush: true);
 
-    if (seaTileBytes != null &&
-        const ListEquality().equals(await file.readAsBytes(), seaTileBytes)) {
+    if (seaTileBytes != null && const ListEquality().equals(await file.readAsBytes(), seaTileBytes)) {
       await file.delete();
-      return TileProgress(
-        failedUrl: null,
-        wasSeaTile: true,
-        wasExistingTile: false,
-        tileImage: Uint8List.fromList(bytes),
-      );
+      return TileProgress(failedUrl: null, wasSeaTile: true, wasExistingTile: false, tileImage: Uint8List.fromList(bytes));
     }
   } catch (e) {
     if (errorHandler != null) errorHandler(e);
-    return TileProgress(
-      failedUrl: networkUrl,
-      wasSeaTile: false,
-      wasExistingTile: false,
-      tileImage: null,
-    );
+    return TileProgress(failedUrl: networkUrl, wasSeaTile: false, wasExistingTile: false, tileImage: null);
   }
 
-  return TileProgress(
-    failedUrl: null,
-    wasSeaTile: false,
-    wasExistingTile: false,
-    tileImage: Uint8List.fromList(bytes),
-  );
+  return TileProgress(failedUrl: null, wasSeaTile: false, wasExistingTile: false, tileImage: Uint8List.fromList(bytes));
 }

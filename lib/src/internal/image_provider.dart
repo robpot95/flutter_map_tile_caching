@@ -34,8 +34,7 @@ class FMTCImageProvider extends ImageProvider<FMTCImageProvider> {
   final Map<String, String> headers;
 
   /// Used internally to safely and efficiently enforce the `settings.maxStoreLength`
-  static final Queue removeOldestQueue =
-      Queue(timeout: const Duration(seconds: 1));
+  static final Queue removeOldestQueue = Queue(timeout: const Duration(seconds: 1));
 
   /// Used internally to safely and efficiently update the cache hits statistic
   static final Queue cacheHitsQueue = Queue();
@@ -47,31 +46,20 @@ class FMTCImageProvider extends ImageProvider<FMTCImageProvider> {
   late final FMTCTileProviderSettings settings;
 
   /// Create a specialised [ImageProvider] dedicated to 'flutter_map_tile_caching'
-  FMTCImageProvider({
-    required this.provider,
-    required this.options,
-    required this.coords,
-    required this.httpClient,
-    required this.headers,
-  }) : settings = provider.settings;
+  FMTCImageProvider({required this.provider, required this.options, required this.coords, required this.httpClient, required this.headers})
+    : settings = provider.settings;
 
   @override
-  ImageStreamCompleter loadImage(
-    FMTCImageProvider key,
-    ImageDecoderCallback decode,
-  ) {
+  ImageStreamCompleter loadImage(FMTCImageProvider key, ImageDecoderCallback decode) {
     // ignore: close_sinks
-    final StreamController<ImageChunkEvent> chunkEvents =
-        StreamController<ImageChunkEvent>();
+    final StreamController<ImageChunkEvent> chunkEvents = StreamController<ImageChunkEvent>();
 
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key: key, decode: decode, chunkEvents: chunkEvents),
       chunkEvents: chunkEvents.stream,
       scale: 1,
       debugLabel: coords.toString(),
-      informationCollector: () => <DiagnosticsNode>[
-        DiagnosticsProperty<TileCoordinates>('Coordinates', coords),
-      ],
+      informationCollector: () => <DiagnosticsNode>[DiagnosticsProperty<TileCoordinates>('Coordinates', coords)],
     );
   }
 
@@ -80,26 +68,16 @@ class FMTCImageProvider extends ImageProvider<FMTCImageProvider> {
     required ImageDecoderCallback decode,
     required StreamController<ImageChunkEvent> chunkEvents,
   }) async {
-    Future<void> cacheHitMiss({
-      required bool hit,
-    }) async {
-      final File file = provider.storeDirectory.access.stats >>>
-          (hit ? 'cacheHits.cache' : 'cacheMisses.cache');
+    Future<void> cacheHitMiss({required bool hit}) async {
+      final File file = provider.storeDirectory.access.stats >>> (hit ? 'cacheHits.cache' : 'cacheMisses.cache');
 
       await (hit ? cacheHitsQueue : cacheMissesQueue).add(() async {
         await file.create(recursive: true);
-        await file.writeAsString(
-          ((int.tryParse(await file.readAsString()) ?? 0) + 1).toString(),
-          flush: true,
-        );
+        await file.writeAsString(((int.tryParse(await file.readAsString()) ?? 0) + 1).toString(), flush: true);
       });
     }
 
-    Future<Codec> finish({
-      Uint8List? bytes,
-      String? throwError,
-      bool? cacheHit,
-    }) async {
+    Future<Codec> finish({Uint8List? bytes, String? throwError, bool? cacheHit}) async {
       scheduleMicrotask(() => PaintingBinding.instance.imageCache.evict(key));
       unawaited(chunkEvents.close());
       if (cacheHit != null) unawaited(cacheHitMiss(hit: cacheHit));
@@ -114,21 +92,16 @@ class FMTCImageProvider extends ImageProvider<FMTCImageProvider> {
     final String networkUrl = provider.getTileUrl(coords, options);
     final String matcherUrl = provider.settings.obscureQueryParams(networkUrl);
 
-    final File file = provider.storeDirectory.access.tiles >>>
-        filesystemSanitiseValidate(
-          inputString: matcherUrl,
-          throwIfInvalid: false,
-        );
+    final File file = provider.storeDirectory.access.tiles >>> filesystemSanitiseValidate(inputString: matcherUrl, throwIfInvalid: false);
 
     // Logic to check whether the tile needs creating or updating
     final bool needsCreating = !(await file.exists());
     final bool needsUpdating = needsCreating
         ? false
         : settings.behavior == CacheBehavior.onlineFirst ||
-            (settings.cachedValidDuration != Duration.zero &&
-                DateTime.now().millisecondsSinceEpoch -
-                        (await file.lastModified()).millisecondsSinceEpoch >
-                    settings.cachedValidDuration.inMilliseconds);
+              (settings.cachedValidDuration != Duration.zero &&
+                  DateTime.now().millisecondsSinceEpoch - (await file.lastModified()).millisecondsSinceEpoch >
+                      settings.cachedValidDuration.inMilliseconds);
 
     // Read the tile file if it exists
     Uint8List? bytes;
@@ -136,11 +109,7 @@ class FMTCImageProvider extends ImageProvider<FMTCImageProvider> {
 
     // IF network is disabled & the tile does not exist THEN throw an error
     if (settings.behavior == CacheBehavior.cacheOnly && needsCreating) {
-      return finish(
-        throwError:
-            'Failed to load the tile from the cache because it was missing.',
-        cacheHit: false,
-      );
+      return finish(throwError: 'Failed to load the tile from the cache because it was missing.', cacheHit: false);
     }
 
     // IF network is enabled & (the tile does not exist | needs updating) THEN download the tile | throw an error
@@ -149,9 +118,10 @@ class FMTCImageProvider extends ImageProvider<FMTCImageProvider> {
 
       // Try to get a response from a server, throwing an error if not possible & the tile does not exist
       try {
-        final HttpClientRequest request =
-            await httpClient.getUrl(Uri.parse(networkUrl));
-        headers.forEach((k, v) => request.headers.add(k, v));
+        // Option 2: Direct cascade iteration
+        final HttpClientRequest request = await httpClient.getUrl(Uri.parse(networkUrl));
+        ({...settings.headers, ...headers}).forEach((k, v) => request.headers.add(k, v));
+
         response = await request.close();
       } catch (err) {
         return finish(
@@ -178,12 +148,7 @@ class FMTCImageProvider extends ImageProvider<FMTCImageProvider> {
       bytes = await consolidateHttpClientResponseBytes(
         response,
         onBytesReceived: (int cumulative, int? total) {
-          chunkEvents.add(
-            ImageChunkEvent(
-              cumulativeBytesLoaded: cumulative,
-              expectedTotalBytes: total,
-            ),
-          );
+          chunkEvents.add(ImageChunkEvent(cumulativeBytesLoaded: cumulative, expectedTotalBytes: total));
         },
       );
 
@@ -191,15 +156,7 @@ class FMTCImageProvider extends ImageProvider<FMTCImageProvider> {
       // encode a valid image
       late final bool isValidImageData;
       try {
-        isValidImageData = (await (await instantiateImageCodec(
-              bytes,
-              targetWidth: 8,
-              targetHeight: 8,
-            ))
-                    .getNextFrame())
-                .image
-                .width >
-            0;
+        isValidImageData = (await (await instantiateImageCodec(bytes, targetWidth: 8, targetHeight: 8)).getNextFrame()).image.width > 0;
       } catch (e) {
         isValidImageData = false;
       }
@@ -216,9 +173,7 @@ class FMTCImageProvider extends ImageProvider<FMTCImageProvider> {
       // Cache the tile in a separate isolate
       unawaited(file.create().then((_) => file.writeAsBytes(bytes!)));
       if (needsCreating) {
-        unawaited(
-          provider.storeDirectory.stats.invalidateCachedStatisticsAsync(),
-        );
+        unawaited(provider.storeDirectory.stats.invalidateCachedStatisticsAsync());
       }
 
       // If an new tile was created over the tile limit, delete the oldest tile
@@ -231,9 +186,7 @@ class FMTCImageProvider extends ImageProvider<FMTCImageProvider> {
             File? currentOldestFile;
             DateTime? currentOldestDateTime;
 
-            await for (final FileSystemEntity e in await provider
-                .storeDirectory.access.tiles
-                .listWithExists()) {
+            await for (final FileSystemEntity e in await provider.storeDirectory.access.tiles.listWithExists()) {
               if (e is! File) break;
 
               currentIteration++;
@@ -252,8 +205,7 @@ class FMTCImageProvider extends ImageProvider<FMTCImageProvider> {
 
             if (!needToDelete) return;
             await currentOldestFile?.delete();
-            await provider.storeDirectory.stats
-                .invalidateCachedStatisticsAsync();
+            await provider.storeDirectory.stats.invalidateCachedStatisticsAsync();
           }),
         );
       }
@@ -266,16 +218,12 @@ class FMTCImageProvider extends ImageProvider<FMTCImageProvider> {
   }
 
   @override
-  Future<FMTCImageProvider> obtainKey(ImageConfiguration configuration) =>
-      SynchronousFuture<FMTCImageProvider>(this);
+  Future<FMTCImageProvider> obtainKey(ImageConfiguration configuration) => SynchronousFuture<FMTCImageProvider>(this);
 
   @override
   bool operator ==(Object other) {
     if (other.runtimeType != runtimeType) return false;
-    return other is FMTCImageProvider &&
-        other.coords == coords &&
-        other.provider.storeDirectory.storeName ==
-            provider.storeDirectory.storeName;
+    return other is FMTCImageProvider && other.coords == coords && other.provider.storeDirectory.storeName == provider.storeDirectory.storeName;
   }
 
   @override

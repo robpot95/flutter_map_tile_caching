@@ -29,11 +29,8 @@ class FMTCSettings {
   final FilesystemSanitiserResult Function(String input) filesystemSanitiser;
 
   /// Create custom global 'flutter_map_tile_caching' settings
-  FMTCSettings({
-    FMTCTileProviderSettings? defaultTileProviderSettings,
-    this.filesystemSanitiser = defaultFilesystemSanitiser,
-  }) : defaultTileProviderSettings =
-            defaultTileProviderSettings ?? FMTCTileProviderSettings();
+  FMTCSettings({FMTCTileProviderSettings? defaultTileProviderSettings, this.filesystemSanitiser = defaultFilesystemSanitiser})
+    : defaultTileProviderSettings = defaultTileProviderSettings ?? FMTCTileProviderSettings();
 
   /// Use [filesystemSanitiser] publicly, in a validation situation such as in [FormField]
   ///
@@ -46,10 +43,7 @@ class FMTCSettings {
   /// A `null` output means the string is valid, otherwise appropriate error text is outputted (in English).
   String? filesystemFormFieldValidator(String? storeName) {
     try {
-      filesystemSanitiseValidate(
-        inputString: storeName ?? '',
-        throwIfInvalid: true,
-      );
+      filesystemSanitiseValidate(inputString: storeName ?? '', throwIfInvalid: true);
       return null;
     } on InvalidFilesystemString catch (e) {
       return e.toStringUserFriendly();

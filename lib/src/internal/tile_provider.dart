@@ -33,15 +33,9 @@ class FMTCTileProvider extends TileProvider {
   /// Usually created from the store directory chain, eg. [StoreDirectory.getTileProvider].
   ///
   /// This contains the logic for the tile provider, such as browse caching and using bulk downloaded tiles.
-  FMTCTileProvider({
-    required this.storeDirectory,
-    required FMTCTileProviderSettings? settings,
-    super.headers,
-    HttpClient? httpClient,
-  })  : settings =
-            settings ?? FMTC.instance.settings.defaultTileProviderSettings,
-        httpClient = httpClient ?? HttpClient()
-          ..userAgent = null;
+  FMTCTileProvider({required this.storeDirectory, required FMTCTileProviderSettings? settings, super.headers, HttpClient? httpClient})
+    : settings = settings ?? FMTC.instance.settings.defaultTileProviderSettings,
+      httpClient = (httpClient ?? HttpClient())..userAgent = null;
 
   /// Closes the open [HttpClient] - this will make the provider unable to perform network requests
   @override
@@ -52,47 +46,29 @@ class FMTCTileProvider extends TileProvider {
 
   /// Get a browsed tile as an image, paint it on the map and save it's bytes to cache for later (dependent on the [CacheBehavior])
   @override
-  ImageProvider getImage(TileCoordinates coords, TileLayer options) =>
-      FMTCImageProvider(
-        provider: this,
-        options: options,
-        coords: coords,
-        httpClient: httpClient,
-        headers: {
-          ...headers,
-          'User-Agent': headers['User-Agent'] == null
-              ? 'flutter_map_tile_caching for flutter_map (unknown)'
-              : 'flutter_map_tile_caching for ${headers['User-Agent']}',
-        },
-      );
+  ImageProvider getImage(TileCoordinates coords, TileLayer options) => FMTCImageProvider(
+    provider: this,
+    options: options,
+    coords: coords,
+    httpClient: httpClient,
+    headers: {
+      ...settings.headers,
+      ...headers,
+      'User-Agent': headers['User-Agent'] == null
+          ? 'flutter_map_tile_caching for flutter_map (unknown)'
+          : 'flutter_map_tile_caching for ${headers['User-Agent']}',
+    },
+  );
 
   /// Check whether a specified tile is cached in the current store synchronously
-  bool checkTileCached({
-    required TileCoordinates coords,
-    required TileLayer options,
-    String? customURL,
-  }) =>
+  bool checkTileCached({required TileCoordinates coords, required TileLayer options, String? customURL}) =>
       (storeDirectory.access.tiles >>>
-              filesystemSanitiseValidate(
-                inputString: settings.obscureQueryParams(
-                  customURL ?? getTileUrl(coords, options),
-                ),
-                throwIfInvalid: false,
-              ))
+              filesystemSanitiseValidate(inputString: settings.obscureQueryParams(customURL ?? getTileUrl(coords, options)), throwIfInvalid: false))
           .existsSync();
 
   /// Check whether a specified tile is cached in the current store asynchronously
-  Future<bool> checkTileCachedAsync({
-    required TileCoordinates coords,
-    required TileLayer options,
-    String? customURL,
-  }) async =>
+  Future<bool> checkTileCachedAsync({required TileCoordinates coords, required TileLayer options, String? customURL}) async =>
       (storeDirectory.access.tiles >>>
-              filesystemSanitiseValidate(
-                inputString: settings.obscureQueryParams(
-                  customURL ?? getTileUrl(coords, options),
-                ),
-                throwIfInvalid: false,
-              ))
+              filesystemSanitiseValidate(inputString: settings.obscureQueryParams(customURL ?? getTileUrl(coords, options)), throwIfInvalid: false))
           .exists();
 }

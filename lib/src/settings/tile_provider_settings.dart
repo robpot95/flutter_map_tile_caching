@@ -40,12 +40,16 @@ class FMTCTileProviderSettings {
   /// _This is a backported feature, and may be unstable._
   final Iterable<RegExp> obscuredQueryParams;
 
+  /// Additional HTTP headers to attach to tile request network requests (e.g., custom User-Agent).
+  final Map<String, String> headers;
+
   /// Create settings for an [FMTCTileProvider]
   FMTCTileProviderSettings({
     this.behavior = CacheBehavior.cacheFirst,
     this.cachedValidDuration = const Duration(days: 16),
     this.maxStoreLength = 0,
     List<String> obscuredQueryParams = const [],
+    this.headers = const {},
   }) : obscuredQueryParams = obscuredQueryParams.map((e) => RegExp('$e=[^&]*'));
 
   /// Apply the [obscuredQueryParams] to the input [url]
@@ -67,9 +71,10 @@ class FMTCTileProviderSettings {
     return other is FMTCTileProviderSettings &&
         other.behavior == behavior &&
         other.cachedValidDuration == cachedValidDuration &&
-        other.maxStoreLength == maxStoreLength;
+        other.maxStoreLength == maxStoreLength &&
+        other.headers == headers;
   }
 
   @override
-  int get hashCode => behavior.hashCode ^ cachedValidDuration.hashCode ^ maxStoreLength.hashCode;
+  int get hashCode => behavior.hashCode ^ cachedValidDuration.hashCode ^ maxStoreLength.hashCode ^ headers.hashCode;
 }
