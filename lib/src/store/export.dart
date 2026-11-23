@@ -50,8 +50,6 @@ class StoreExport {
         fileName: '${_storeDirectory.storeName}.$fileExtension',
         bytes: bytes,
         dialogTitle: 'Export Cache Store',
-        type: FileType.custom,
-        allowedExtensions: [fileExtension],
       );
 
       // Clean up local temp file if needed

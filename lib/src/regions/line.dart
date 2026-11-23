@@ -4,9 +4,9 @@
 import 'dart:math' as math;
 
 import 'package:bezier/bezier.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_map/plugin_api.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:vector_math/vector_math.dart' hide Colors;
 
 import 'base_region.dart';
@@ -40,19 +40,13 @@ class LineRegion implements BaseRegion {
       final List<LatLng> section = [pos, line[line.indexOf(pos) + 1]];
 
       final double bearing = dist.bearing(section[0], section[1]);
-      final double clockwiseRotation =
-          (90 + bearing) > 360 ? 360 - (90 + bearing) : (90 + bearing);
-      final double anticlockwiseRotation =
-          (bearing - 90) < 0 ? 360 + (bearing - 90) : (bearing - 90);
+      final double clockwiseRotation = (90 + bearing) > 360 ? 360 - (90 + bearing) : (90 + bearing);
+      final double anticlockwiseRotation = (bearing - 90) < 0 ? 360 + (bearing - 90) : (bearing - 90);
 
-      final LatLng offset1 =
-          dist.offset(section[0], rad, clockwiseRotation); // Top-right
-      final LatLng offset2 =
-          dist.offset(section[1], rad, clockwiseRotation); // Bottom-right
-      final LatLng offset3 =
-          dist.offset(section[1], rad, anticlockwiseRotation); // Bottom-left
-      final LatLng offset4 =
-          dist.offset(section[0], rad, anticlockwiseRotation); // Top-left
+      final LatLng offset1 = dist.offset(section[0], rad, clockwiseRotation); // Top-right
+      final LatLng offset2 = dist.offset(section[1], rad, clockwiseRotation); // Bottom-right
+      final LatLng offset3 = dist.offset(section[1], rad, anticlockwiseRotation); // Bottom-left
+      final LatLng offset4 = dist.offset(section[0], rad, anticlockwiseRotation); // Top-left
 
       if (overlap == 0) return [offset1, offset2, offset3, offset4];
 
@@ -66,8 +60,7 @@ class LineRegion implements BaseRegion {
         oe ? offset3 : dist.offset(offset3, r ? -rad : rad, bearing),
         os ? offset4 : dist.offset(offset4, r ? rad : -rad, bearing),
       ];
-    }).toList()
-      ..removeLast();
+    }).toList()..removeLast();
   }
 
   @override
@@ -82,22 +75,21 @@ class LineRegion implements BaseRegion {
     int? end,
     Crs crs = const Epsg3857(),
     void Function(Object?)? errorHandler,
-  }) =>
-      DownloadableRegion.internal(
-        points: toOutlines(1).expand((x) => x).toList(),
-        minZoom: minZoom,
-        maxZoom: maxZoom,
-        options: options,
-        type: RegionType.line,
-        originalRegion: this,
-        parallelThreads: parallelThreads,
-        preventRedownload: preventRedownload,
-        seaTileRemoval: seaTileRemoval,
-        start: start,
-        end: end,
-        crs: crs,
-        errorHandler: errorHandler,
-      );
+  }) => DownloadableRegion.internal(
+    points: toOutlines(1).expand((x) => x).toList(),
+    minZoom: minZoom,
+    maxZoom: maxZoom,
+    options: options,
+    type: RegionType.line,
+    originalRegion: this,
+    parallelThreads: parallelThreads,
+    preventRedownload: preventRedownload,
+    seaTileRemoval: seaTileRemoval,
+    start: start,
+    end: end,
+    crs: crs,
+    errorHandler: errorHandler,
+  );
 
   /// Create a drawable area for a [FlutterMap] out of this region
   ///
@@ -127,9 +119,7 @@ class LineRegion implements BaseRegion {
       throw ArgumentError('`overlap` must be between -1 and 1 inclusive');
     }
     if (prettyPaint ? overlap == 0 || overlap == -1 : true) {
-      throw ArgumentError(
-        '`overlap` must be either -1 or 0 when `prettyPaint` is enabled',
-      );
+      throw ArgumentError('`overlap` must be either -1 or 0 when `prettyPaint` is enabled');
     }
 
     final List<List<LatLng>> rects = toOutlines(prettyPaint ? -1 : overlap);
@@ -142,8 +132,7 @@ class LineRegion implements BaseRegion {
       List<double> intersectLine(LatLng p1, LatLng p2) {
         final double a = p1.latitude - p2.latitude;
         final double b = p2.longitude - p1.longitude;
-        final double c =
-            p1.longitude * p2.latitude - p2.longitude * p1.latitude;
+        final double c = p1.longitude * p2.latitude - p2.longitude * p1.latitude;
         return [a, b, -c];
       }
 
@@ -182,50 +171,26 @@ class LineRegion implements BaseRegion {
 
         const Distance distance = Distance();
 
-        final bool aCurve = distance.distance(rects[i][2], intersectionA) >
-            distance.distance(rects[i][1], intersectionB);
+        final bool aCurve = distance.distance(rects[i][2], intersectionA) > distance.distance(rects[i][1], intersectionB);
 
         final LatLng old1 = rects[i][aCurve ? 1 : 2];
         rects[i][aCurve ? 1 : 2] = aCurve ? intersectionB : intersectionA;
-        rects[i][aCurve ? 2 : 1] = distance.offset(
-          rects[i][aCurve ? 1 : 2],
-          diameter,
-          distance.bearing(old1, rects[i][aCurve ? 2 : 1]),
-        );
+        rects[i][aCurve ? 2 : 1] = distance.offset(rects[i][aCurve ? 1 : 2], diameter, distance.bearing(old1, rects[i][aCurve ? 2 : 1]));
         final LatLng old2 = rects[i + 1][aCurve ? 0 : 3];
         rects[i + 1][aCurve ? 0 : 3] = aCurve ? intersectionB : intersectionA;
-        rects[i + 1][aCurve ? 3 : 0] = distance.offset(
-          rects[i + 1][aCurve ? 0 : 3],
-          diameter,
-          distance.bearing(old2, rects[i + 1][aCurve ? 3 : 0]),
-        );
+        rects[i + 1][aCurve ? 3 : 0] = distance.offset(rects[i + 1][aCurve ? 0 : 3], diameter, distance.bearing(old2, rects[i + 1][aCurve ? 3 : 0]));
 
         if (overlap != -1) {
-          final QuadraticBezier curve = QuadraticBezier(
-            [
-              Vector2(
-                rects[i][aCurve ? 2 : 1].longitude,
-                rects[i][aCurve ? 2 : 1].latitude,
-              ),
-              aCurve
-                  ? Vector2(intersectionA.longitude, intersectionA.latitude)
-                  : Vector2(intersectionB.longitude, intersectionB.latitude),
-              Vector2(
-                rects[i + 1][aCurve ? 3 : 0].longitude,
-                rects[i + 1][aCurve ? 3 : 0].latitude,
-              ),
-            ],
-          );
+          final QuadraticBezier curve = QuadraticBezier([
+            Vector2(rects[i][aCurve ? 2 : 1].longitude, rects[i][aCurve ? 2 : 1].latitude),
+            aCurve ? Vector2(intersectionA.longitude, intersectionA.latitude) : Vector2(intersectionB.longitude, intersectionB.latitude),
+            Vector2(rects[i + 1][aCurve ? 3 : 0].longitude, rects[i + 1][aCurve ? 3 : 0].latitude),
+          ]);
 
           curves.add([]);
 
           for (var ii = 0; ii <= curveSmoothening; ii++) {
-            curves[i].add(
-              LatLng(
-                curve.pointAt(ii / curveSmoothening).y,
-                curve.pointAt(ii / curveSmoothening).x,
-              ),
-            );
+            curves[i].add(LatLng(curve.pointAt(ii / curveSmoothening).y, curve.pointAt(ii / curveSmoothening).x));
           }
 
           curves[i].add(aCurve ? intersectionB : intersectionA);
@@ -267,8 +232,6 @@ class LineRegion implements BaseRegion {
   /// This method is unavailable for this region type: use [toOutlines] instead
   @override
   Never toList() {
-    throw UnsupportedError(
-      '`toList` is invalid for this region type: use `toOutlines()` instead',
-    );
+    throw UnsupportedError('`toList` is invalid for this region type: use `toOutlines()` instead');
   }
 }
